@@ -9,10 +9,12 @@ from pyparsing import *
 from pymel import *
 import pymel.core as pm
 
-branchShader = pm.shadingNode('lambert',asShader=True,n='branchShader')
+f = pm.newFile(f=True)
+branchShader = pm.shadingNode('lambert',asShader=True)
 branchShader.setColor([0, .9, 0, 1.0])
 leafShader = pm.shadingNode('phong',asShader=True,n='leafShader')
 leafShader.setColor([0.72, .32, 0.19, 1.0])
+flower_index = 0
 
 def parse_input(axiom,map_input,iterations):
 	mappings = {}
@@ -53,6 +55,7 @@ def parse_input(axiom,map_input,iterations):
 
 def draw_axiom(axiom,ang,dist):
 
+	axiom = "LLLL"
 	stack = []
 
 	zdegr = 0
@@ -60,14 +63,18 @@ def draw_axiom(axiom,ang,dist):
 	xdegr = 0
 
 	first_itr = True
+
 	# axiom = "F-FFFF-F"
 	for command in axiom:
 		
 		print(command)
-		if command is 'F' :
+		if command is 'F' or command is 'L':
 			print ("{} {}".format("F command triggered", xdegr))
-			
-			current = make_branch()[0]
+
+			if command is 'F':
+				current = make_branch()[0]
+			elif command is 'L':
+				current = make_leaf()[0]
 			
 			if not first_itr:
 				current.setMatrix(previous.getMatrix(worldSpace=True))
@@ -129,6 +136,11 @@ def draw_axiom(axiom,ang,dist):
 			zdegr = prev_state[3]
 			print(stack)
 
+def make_flower(flower_index):
+	pm.system.importFile("/Users/brianli/Desktop/Fall2014/lsystem/flower.mb",namespace="flower"+str(flower_index))
+	i = pm.nodetypes.Transform("flower"+str(flower_index)+":Flower")
+	return i
+
 def make_branch():
 	i = pm.polyCube(height=5)
 	pm.select(i[0])
@@ -136,7 +148,7 @@ def make_branch():
 	return i
 
 def make_leaf():
-	i = pm.polyCube(w=0.15,d=0.3,sw=3,sh=3)
+	i = pm.polyCube(w=.5,d=1.5,h=4,sw=3,sh=3)
 	pm.select(i[0].vtx[12:19])
 	pm.scale(0.1,0.1,1,r=True)
 	pm.select(i[0].vtx[0:3],i[0].vtx[28:31])
@@ -148,8 +160,6 @@ def make_leaf():
 	return i
 
 def main():
-	f = pm.newFile(f=True)
-
 	#key variables
 	map_input = \
 	'''F:FF
@@ -164,6 +174,6 @@ def main():
 	draw_axiom(axiom, ang, dist)
 	print(axiom)
 
-main()
+# main()
 
 
