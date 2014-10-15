@@ -9,6 +9,11 @@ from pyparsing import *
 from pymel import *
 import pymel.core as pm
 
+branchShader = pm.shadingNode('lambert',asShader=True,n='branchShader')
+branchShader.setColor([0, .9, 0, 1.0])
+leafShader = pm.shadingNode('phong',asShader=True,n='leafShader')
+leafShader.setColor([0.72, .32, 0.19, 1.0])
+
 def parse_input(axiom,map_input,iterations):
 	mappings = {}
 	alphabet = "FXf+-&^\/|[]"
@@ -47,6 +52,7 @@ def parse_input(axiom,map_input,iterations):
 
 
 def draw_axiom(axiom,ang,dist):
+
 	stack = []
 
 	zdegr = 0
@@ -58,9 +64,11 @@ def draw_axiom(axiom,ang,dist):
 	for command in axiom:
 		
 		print(command)
-		if command is 'F':
+		if command is 'F' :
 			print ("{} {}".format("F command triggered", xdegr))
-			current = pm.polyCube(height=5)[0]
+			
+			current = make_branch()[0]
+			
 			if not first_itr:
 				current.setMatrix(previous.getMatrix(worldSpace=True))
 				pm.parent(current,previous)
@@ -121,6 +129,24 @@ def draw_axiom(axiom,ang,dist):
 			zdegr = prev_state[3]
 			print(stack)
 
+def make_branch():
+	i = pm.polyCube(height=5)
+	pm.select(i[0])
+	pm.hyperShade(assign=branchShader)
+	return i
+
+def make_leaf():
+	i = pm.polyCube(w=0.15,d=0.3,sw=3,sh=3)
+	pm.select(i[0].vtx[12:19])
+	pm.scale(0.1,0.1,1,r=True)
+	pm.select(i[0].vtx[0:3],i[0].vtx[28:31])
+	pm.scale(0.1,0.1,1,r=True)
+	pm.select(i[0].vtx[4],i[0].vtx[7:8],i[0].vtx[11],i[0].vtx[20],i[0].vtx[23:24],i[0].vtx[27]) 
+	pm.scale(0.8,0.8,0.8)
+	pm.select(i[0])
+	pm.hyperShade(assign=leafShader)
+	return i
+
 def main():
 	f = pm.newFile(f=True)
 
@@ -130,7 +156,7 @@ def main():
 	X:F[+X][-X]FX'''
 	axiom = "X"
 	
-	iterations = 4
+	iterations = 3
 	dist = 5
 	ang = 25.7
 	
