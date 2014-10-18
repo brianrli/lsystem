@@ -7,74 +7,29 @@ A basic (my first) maya scripting project.
 import string
 import re
 from pyparsing import *
+import parser as pr
 from pymel import *
 import pymel.core as pm
+
 
 f = pm.newFile(f=True)
 class Lsystem:
 
-	branchShader = pm.shadingNode('lambert',asShader=True)
-	branchShader.setColor([0, .9, 0, 1.0])
-	leafShader = pm.shadingNode('phong',asShader=True)
-	leafShader.setColor([0.72, .32, 0.19, 1.0])
-
-	def __init__(self,axiom,map_input,iterations, ang, dist):
-		proc_axiom = self.parse_input(axiom,map_input,iterations)
+	def __init__(self,axiom,map_input,iterations, ang, dist,vars):
+		self.branchShader = pm.shadingNode('lambert',asShader=True)
+		self.branchShader.setColor([0, .9, 0, 1.0])
+		self.leafShader = pm.shadingNode('lambert',asShader=True)
+		self.leafShader.setColor([0.72, .32, 0.19, 1.0])
+		self.flowerShader = pm.shadingNode('lambert',asShader=True)
+		self.flowerShader.setColor([0.894,0.447,.592,1.0])
+		proc_axiom = pr.parse_input(map_input,axiom,iterations,vars)
 		self.draw_axiom(proc_axiom, ang, dist)
 		print(proc_axiom)
 
-	def parse_input(self,axiom,map_input,iterations):
-		mappings = {}
-		alphabet = "FXf+-&^\/|[]"
-		for letter in alphabet:
-			mappings[letter] = letter
-
-
-		#parse map
-		map = Word(alphabet)
-		instruction = Word(alphabet)
-		mapExpr = map.setResultsName("key")+":"+instruction.setResultsName("value")
-		split_map_input = string.split(map_input, '\n')
-		print(split_map_input)
-		for line in split_map_input:
-			try:
-				newMap = mapExpr.parseString(line)
-				print(newMap.key)
-				print(newMap.value)
-				mappings[newMap.key] = newMap.value
-			except:
-				print("Bad Map Definition")
-				raise SystemExit(0)
-
-
-		print(mappings)
-
-		newaxiom = ""
-		#process LSystem
-		for i in range(iterations):
-			for letter in axiom:
-				newaxiom+=mappings[letter]
-			axiom = newaxiom
-
-		print("***RESULT***\n"+axiom+"\n************")
-		return newaxiom
-
-	def parse_args(self,in_string):
-		instructions = []
-		m = re.findall("([FXf\+&/])(\(.*?\))?",in_string)
-		for pair in m:
-			item = []
-			item.append(pair[0])
-			if pair[1] is '':
-				item.append(pair[0]+"def")
-			else:
-				item.append(re.match("\((.*?)\)", pair[1]).group(1))
-			instructions.append(item)
-		return instructions
 
 	def draw_axiom(self,axiom,ang,dist):
 
-		axiom = "LLLL"
+		# axiom = "LLLL"
 		stack = []
 
 		zdegr = 0
@@ -85,15 +40,16 @@ class Lsystem:
 		flower_index = 0
 
 		# axiom = "F-FFFF-F"
-		for command in axiom:
+		for c in axiom:
 			
+			command = c[0]
 			print(command)
 			if command is 'F' or command is 'L':
 				print ("{} {}".format("F command triggered", xdegr))
 
-				if command is 'F':
+				if command is 'asd':
 					current = self.make_branch()[0]
-				elif command is 'L':
+				elif command is 'F':
 					current = self.make_flower(flower_index)
 					flower_index += 1
 					# current = make_leaf()[0]
@@ -161,12 +117,14 @@ class Lsystem:
 	def make_flower(self,flower_index):
 		pm.system.importFile("/Users/brianli/Desktop/Fall2014/lsystem/flower.mb",namespace="flower"+str(flower_index))
 		i = pm.nodetypes.Transform("flower"+str(flower_index)+":Flower")
+		pm.select(i)
+		pm.hyperShade(assign=self.flowerShader)
 		return i
 
-	def make_branch(self):
-		i = pm.polyCube(height=5)
+	def make_branch(self,h):
+		i = pm.polyCube(height=h)
 		pm.select(i[0])
-		pm.hyperShade(assign=branchShader)
+		pm.hyperShade(assign=Lsystem.branchShader)
 		return i
 
 	def make_leaf(self):
@@ -178,27 +136,23 @@ class Lsystem:
 		pm.select(i[0].vtx[4],i[0].vtx[7:8],i[0].vtx[11],i[0].vtx[20],i[0].vtx[23:24],i[0].vtx[27]) 
 		pm.scale(0.8,0.8,0.8)
 		pm.select(i[0])
-		pm.hyperShade(assign=leafShader)
+		pm.hyperShade(assign=Lsystem.leafShader)
 		return i
 
 def main():
 	
-	
+	variables = {}
 	#key variables
 	map_input = \
-	'''F:FF
-	X:F[+X][-X]FX'''
+'''F:FF
+X:F[+X][-X]FX'''
 	axiom = "X"
 	
 	iterations = 3
 	dist = 5
 	ang = 25.7
-
-	Lsystem(axiom, map_input, iterations, ang, dist)
-	
-# 	axiom = parse_input(axiom,map_input,iterations)
-# 	draw_axiom(axiom, ang, dist)
-# 	print(axiom)
+	print("Commence Lsystem Construction")
+	Lsystem(axiom, map_input, iterations, ang, dist,variables)
 
 main()
 
