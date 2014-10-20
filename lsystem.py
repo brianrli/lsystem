@@ -29,7 +29,6 @@ class Lsystem:
 
 	def draw_axiom(self,axiom,ang,dist):
 
-		# axiom = "LLLL"
 		stack = []
 
 		zdegr = 0
@@ -43,13 +42,17 @@ class Lsystem:
 		for c in axiom:
 			
 			command = c[0]
-			print(command)
+			argument = c[1]
+
 			if command is 'F' or command is 'L':
 				print ("{} {}".format("F command triggered", xdegr))
+				if argument is 'def':
+					argument = dist
 
-				if command is 'asd':
-					current = self.make_branch()[0]
-				elif command is 'F':
+				if command is 'F':
+					print(argument)
+					current = self.make_branch(argument)[0]
+				elif command is 'L':
 					current = self.make_flower(flower_index)
 					flower_index += 1
 					# current = make_leaf()[0]
@@ -64,9 +67,9 @@ class Lsystem:
 				
 				if xdegr != 0 or ydegr != 0 or zdegr != 0:
 					print("triggered 1")
-					pm.move(0,dist/2,0,current,os=True)
+					pm.move(0,argument/2,0,current,os=True)
 					pm.rotate(current,xdegr,ydegr,zdegr,os=True)
-					pm.move(0,dist/2,0,current,os=True,relative=True)
+					pm.move(0,argument/2,0,current,os=True,relative=True)
 				else:
 					print("triggered 2")
 					pm.move(0,dist,0,current,os=True,relative=True)
@@ -77,27 +80,37 @@ class Lsystem:
 				previous = current
 
 			elif command is '-':
-				zdegr += -ang
+				if argument is 'def':
+					argument = ang
+				zdegr += -argument
 				print ("{} {}".format("- command triggered", ang))
 
 			elif command is '+':
-				zdegr += ang
+				if argument is 'def':
+					argument = ang
+				zdegr += argument
 				print ("{} {}".format("+ command triggered", ang))
 
 			elif command is '&':
+				if argument is 'def':
+					argument = ang
 				print("& command triggered")
-				xdegr += -ang
+				xdegr += -argument
 				print(xdegr)
 
 			elif command is '^':
-				xdegr += ang
+				if argument is 'def':
+					argument = ang
+				xdegr += argument
 
 			elif command == "\\":
 				print("\\ command triggered")
-				ydegr += -ang
+				ydegr += -argument
 
 			elif command is '/':
-				ydegr += ang
+				if argument is 'def':
+					argument = ang
+				ydegr += argument
 
 			elif command is '[':
 				print("[ triggered")
@@ -106,13 +119,17 @@ class Lsystem:
 
 			elif command is ']':
 				print("] triggered")
-				print(stack)
+				# print(stack)
 				prev_state = stack.pop()
 				previous = prev_state[0]
 				xdegr = prev_state[1]
 				ydegr = prev_state[2]
 				zdegr = prev_state[3]
-				print(stack)
+				# print(stack)
+
+			#decrement width
+			elif command is '!':
+				print("! triggered")
 
 	def make_flower(self,flower_index):
 		pm.system.importFile("/Users/brianli/Desktop/Fall2014/lsystem/flower.mb",namespace="flower"+str(flower_index))
@@ -124,7 +141,7 @@ class Lsystem:
 	def make_branch(self,h):
 		i = pm.polyCube(height=h)
 		pm.select(i[0])
-		pm.hyperShade(assign=Lsystem.branchShader)
+		pm.hyperShade(assign=self.branchShader)
 		return i
 
 	def make_leaf(self):
@@ -144,9 +161,9 @@ def main():
 	variables = {}
 	#key variables
 	map_input = \
-'''F:FF
-X:F[+X][-X]FX'''
-	axiom = "X"
+'''F(w):F(w)F(w)
+X(w):F(w)[+X(w)][-X(w)]F(w)X(w)'''
+	axiom = "X(10)"
 	
 	iterations = 3
 	dist = 5
