@@ -9,17 +9,35 @@ def is_number(s):
     except ValueError:
         return False
 
+def create_dict(in_string):
+	if not in_string:
+		return {}
+
+	variables = {}
+	for pair in re.split("\n",in_string):
+		keyval = re.split(":",pair)
+		if keyval[0] is not '' and len(keyval) is 2:
+			variables[keyval[0]]=float(keyval[1])
+	# print(variables)
+	return variables
+
+
 # Given an input string, returns list of commands
 # and arguments, as [command, arguments...]
 def parse_args(in_string):
+	in_string = str(in_string)
 	instructions = []
-	m = re.findall("([\[\]XABC!FXf\+\-&/])(\(.*?\))?",in_string)
+	m = re.findall("([\[\]XABC$!FXf\+\-&/])(\(.*?\))?",in_string)
 	for pair in m:
 		item = []
 		item.append(pair[0])
 		if pair[1] is '':
 			item.append("def")
 		else:
+			print(m)
+			print(pair)
+			print(pair[1])
+			print(re.match("\((.*?)\)", pair[1]))
 			arguments = re.match("\((.*?)\)", pair[1]).group(1)
 			for ar in re.split(",",arguments):
 				item.append(ar)
@@ -30,30 +48,35 @@ def parse_args(in_string):
 # and arguments do a given depth
 def parse_input(in_string,axiom,depth,variables):
 
-	alphabet = "AXBC!FXf+-&^\/|[]"
+	if not in_string or not axiom:
+		return []
+
+	alphabet = "AXBC$!FXf+-&^\/|[]"
 	mappings = {}
 	for letter in alphabet:
 		mappings[letter] = [letter,'def']
 
-	r = re.split("\n", in_string)
-	for projection in r:
-		m = re.match("([!ABCFX\-f\+&/])(\((.*?)\))?:(.*)", projection)
-		try:
-			# print(m.groups())
-			new_map = [m.group(4)]+re.split(",",m.group(3))
-			# mappings[m.group(1)]=[m.group(4),m.group(3)]
-			mappings[m.group(1)]=new_map
-		except:
-			print("Problem with projection")
-			print(projection)
-			raise SystemExit(0)
+	if in_string:
+		r = re.split("\n", in_string)
+		for projection in r:
+			m = re.match("([!ABC$FX\-f\+&/])(\((.*?)\))?:(.*)", projection)
+			try:
+				new_map = [m.group(4)]
+				if m.group(3) is not None:
+					new_map+=re.split(",",m.group(3))
+				# mappings[m.group(1)]=[m.group(4),m.group(3)]
+				mappings[m.group(1)]=new_map
+			except:
+				print("Problem with projection")
+				print(projection)
+				raise SystemExit(0)
 
 	# print(m.groups())
 	axiom_list = parse_args(axiom)
 
+
 	for i in range(depth):
 		newaxiom = []
-		
 		for item in axiom_list:
 
 			#line to replace with
@@ -64,6 +87,10 @@ def parse_input(in_string,axiom,depth,variables):
 
 			#identity, just copy
 			if command_name is replacement:
+				for i in range(len(item[1:])):
+					if is_number(item[1:][0]):
+						# item[1:][i] = float()
+						item[i+1] = float(item[1:][i])
 				newaxiom.append(item)
 			else:
 				#assign values of local variables to map
@@ -77,8 +104,13 @@ def parse_input(in_string,axiom,depth,variables):
 							print("Incorrect Number of Argments")
 							print("Variables:{} Given:{}".format(local_map,item[1:]))
 							raise SystemExit(0)
-					else:
-						print("a number {}".format(local_map[counter]))
+					# elif:
+					# 	pass
+					# 	# print("fails here")
+					# 	# print(item)
+					# 	# print(local_map)
+					# 	# print(counter)
+					# 	# print("a number {}".format(local_map[counter]))
 
 				#recursively parse replacement
 				replacement_pairs = parse_args(replacement)
@@ -100,7 +132,7 @@ def parse_input(in_string,axiom,depth,variables):
 								if is_number(m[i]) is not True:
 									new_string+="variables[\'"+m[i]+"\']"
 								else:
-									new_string+=m[i]
+									new_string+=str(m[i])
 								if i < len(o):
 										new_string += o[i]
 							try:
@@ -164,10 +196,34 @@ C(l,w):!(w)F(l)[+(a2)$B(l*r2,w*wr)]B(l*r1,w*wr)'''
 # '''F:FF
 # X:F[+X][-X]FX'''
 # 	axiom = "X"
-	
+	axiom = "F(10)&(45)F(1)"
+
+	variables ={
+		'd1':94.74,
+		'd2':132.63,
+		'a':18.95,
+		'lr':1.109,
+		'vr':1.732
+	}
+	strvars =\
+'''d1:94.74
+d2:132.63
+a:18.95
+lr:1.109
+vr:1.732
+'''
+	strvars = " "
+	axiom = "!(1)F(200)/(45)A"
+	map_input =\
+'''A:!(vr)F(50)[&(a)F(50)A]/(d1)[&(a)F(50)A]/d2[&(a)F(50)A]
+F(l):F(l*lr)
+!(w):!(w*vr)'''
+
 	final = parse_input(map_input,axiom,2,variables)
+	# final = parse_input("", "", 0, {})
 	print(final)
 	# for item in final:
 	# 	print(item[0])
 	# print(parse_args(strng2))
-# main()
+	# print(create_dict(strvars))
+main()

@@ -1,127 +1,137 @@
 import maya.cmds as cmds
-import lsystem
+from lsystem import Lsystem
+from optwin import AR_OptionsWindow
+from parser import create_dict
 
-class SK_OptionsWindow(object):
+#---strings---
+#variables
+#axiom
+#map_input
+
+#---variables---
+#iteration depth
+#default dist
+#default ang
+
+#--optional--
+#progress bar
+
+class SK_OptionsWindow(AR_OptionsWindow):
 	def __init__(self):
-		self.window = 'sk_optionsWindow'
+		AR_OptionsWindow.__init__(self)
 		self.title = 'Sakura Generator'
-		self.size = (546,350)
-		self.supportsToolAction = False
-		self.actionName = 'Apply and Close'
+		self.actionName = 'Create'
+		self.sakuraTree = Lsystem("", "", 0, 0, 0, {})
 
-	def create(self):
-		if cmds.window(self.window,exists=True):
-			cmds.deleteUI(self.window,window=True)
-		self.window = cmds.window(
-			self.window,
-			title=self.title,
-			widthHeight=self.size,
-			menuBar=True
-		)
-		self.mainForm = cmds.formLayout(nd=100)
-		self.commonMenu()
-		self.commonButtons()
-		cmds.showWindow()
-
-	def commonMenu(self):
-		self.editMenu = cmds.menu(label='Edit')
-		self.editMenuSave = cmds.menuItem(
-			label='Save Settings'
-			)
-		self.editMenuReset = cmds.menuItem(
-			label='Reset Settings'
-			)
-		self.editMenuDiv = cmds.menuItem(d=True)
-		self.editMenuRadio = cmds.radioMenuItemCollection()
-		self.editMenuTool = cmds.menuItem(
-			label = 'As Tool',
-			radioButton = True,
-			enable = self.supportsToolAction
-			)
-		self.editMenuAction = cmds.menuItem(
-			label = 'As Action',
-			radioButton = True,
-			enable = self.supportsToolAction
-			)
-		self.helpMenu = cmds.menu(label='Help')
-		self.helpMenuItem = cmds.menuItem(
-			label = 'Help on %s'%self.title
-			)
-
-	def commonButtons(self):
-		self.commonBtnSize = ((self.size[0]-18)/3,26)
-		# self.commonBtnLayout = cmds.rowLayout(
-		# 	numberOfColumns=3,
-		# 	cw3=(
-		# 		self.commonBtnSize[0]+3,
-		# 		self.commonBtnSize[0]+3,
-		# 		self.commonBtnSize[0]+3
-		# 		),
-		# 	ct3=('both','both','both'),
-		# 	co3=(2,0,2),
-		# 	cl3=('center','center','center')
-		# 	)
-		self.actionBtn = cmds.button(
-			label=self.actionName,
-			height=self.commonBtnSize[1],
-			command=self.actionBtnCmd
-			)
-		self.applyBtn = cmds.button(
-			label=self.actionName,
-			height=self.commonBtnSize[1],
-			command=self.applyBtnCmd
-			)
-		self.closeBtn = cmds.button(
-			label='Close',
-			height=self.commonBtnSize[1],
-			command=self.closeBtnCmd
+	def displayOptions(self):
+		
+		#Depth, Default Distance, Default Angle, Axiom
+		self.constructGrp = cmds.frameLayout(
+			label='Construction Parameters'
 			)
 		cmds.formLayout(
-			self.mainForm,
-			e=True,
-			attachForm = (
-				[self.actionBtn,'left',5],
-				[self.actionBtn,'bottom',5],
-				[self.applyBtn,'bottom',5],
-				[self.closeBtn,'bottom',5],
-				[self.closeBtn,'right',5]
-				),
-			attachPosition=(
-				[self.actionBtn,'right',1,33],
-				[self.closeBtn,'left',0,67]
-				),
-			attachControl=(
-				[self.applyBtn,'left',4,self.actionBtn],
-				[self.applyBtn,'right',4,self.closeBtn]
-				),
-			attachNone=(
-				[self.actionBtn,'top'],
-				[self.applyBtn,'top'],
-				[self.closeBtn,'top']
+			self.optionsForm,e=True,
+			attachForm=(
+				[self.constructGrp,'top',0],
+				[self.constructGrp,'left',0],
+				[self.constructGrp,'right',0]
 				)
 			)
+		self.constructCol = cmds.columnLayout(adj=True)
+		self.depth = cmds.intFieldGrp(
+			label='Depth: ',
+			numberOfFields=1,
+			value1=1
+			)
+		self.dist = cmds.floatFieldGrp(
+			label='Default Distance: ',
+			numberOfFields=1,
+			value1=5
+			)
+		self.ang = cmds.floatFieldGrp(
+			label='Default Angle: ',
+			numberOfFields=1,
+			value1=90
+			)
+		self.axiom = cmds.textFieldGrp(
+			label='Axiom: '
+		)
 
-	def helpMenuCmd(self,*args):
-		cmds.launch(web='http://maya-python.com') #replace w/ github documentation
-	def editMenuSaveCmd(self,*args):
-		pass
-	def editMenuResetCmd(self,*args):
-		pass
-	def editMenuToolCmd(self,*args):
-		pass
-	def editMenuActionCmd(self,*args):
-		pass
-	
-	#Three Bottom Buttons
-	def actionBtnCmd(self,*args):
-		self.applyBtnCmd()
-		self.closeBtnCmd()
+		cmds.setParent(self.optionsForm)
+		self.projectionGrp = cmds.frameLayout(
+			label='Projections'
+			)
+		cmds.formLayout(
+			self.optionsForm,e=True,
+			attachControl=(
+				[self.projectionGrp,'top',0,self.constructGrp]
+				),
+			attachForm=(
+				[self.projectionGrp,'left',0],
+				[self.projectionGrp,'right',0]
+				)
+			)
+		self.projectionCol = cmds.columnLayout(columnAttach=('left',0),adj=True)
+		self.projections = cmds.scrollField(editable=True)
+
+		cmds.setParent(self.optionsForm)
+		self.variableGrp = cmds.frameLayout(
+			label='Variables'
+			)
+		cmds.formLayout(
+			self.optionsForm,e=True,
+			attachControl=(
+				[self.variableGrp,'top',0,self.projectionGrp]
+				),
+			attachForm=(
+				[self.variableGrp,'left',0],
+				[self.variableGrp,'right',0]
+				)
+			)
+		self.variableCol = cmds.columnLayout(adj=True)
+		self.variables = cmds.scrollField( editable=True)
+
+
 	def applyBtnCmd(self,*args):
-		pass
-	def closeBtnCmd(self,*args):
-		cmds.deleteUI(self.window,window=True)
+		self.sakuraTree.axiom = cmds.textFieldGrp(
+			self.axiom,q=True,
+			text=True
+			)
+		self.sakuraTree.depth = cmds.intFieldGrp(
+			self.depth,q=True,
+			value1=True
+			)
+		self.sakuraTree.dist = cmds.floatFieldGrp(
+			self.dist,q=True,
+			value1=True
+			)
+		self.sakuraTree.ang = cmds.floatFieldGrp(
+			self.ang,q=True,
+			value1=True
+			)
+		self.sakuraTree.map_input = cmds.scrollField(
+			self.projections,q=True,
+			text=True
+			)
+		self.sakuraTree.variables = create_dict(cmds.scrollField(
+			self.variables,q=True,
+			text=True
+			))
 
+		# print(self.sakuraTree.axiom)
+		# print(self.sakuraTree.depth)
+		# print(self.sakuraTree.map_input)
+		# self.objIndAsCmd={
+		# 	1:cmds.polyCube,
+		# 	2:cmds.polyCone,
+		# 	3:cmds.polyCylinder,
+		# 	4:cmds.polySphere
+		# }
+		# objIndex =cmds.radioButtonGrp(
+		# 	self.objType,q=True,
+		# 	select=True
+		# 	)
+		# newobject=self.objIndAsCmd[objIndex]()
+		self.sakuraTree.create()
+SK_OptionsWindow.showUI()
 
-
-testWindow=SK_OptionsWindow()
-testWindow.create()

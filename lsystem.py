@@ -16,16 +16,26 @@ f = pm.newFile(f=True)
 class Lsystem:
 
 	def __init__(self,axiom,map_input,iterations, ang, dist,vars):
+		self.axiom = axiom
+		self.map_input = map_input
+		self.depth = iterations
+		self.ang = ang
+		self.dist = dist
+		self.variables = vars 
+
 		self.branchShader = pm.shadingNode('lambert',asShader=True)
 		self.branchShader.setColor([0, .9, 0, 1.0])
 		self.leafShader = pm.shadingNode('lambert',asShader=True)
 		self.leafShader.setColor([0.72, .32, 0.19, 1.0])
 		self.flowerShader = pm.shadingNode('lambert',asShader=True)
 		self.flowerShader.setColor([0.894,0.447,.592,1.0])
-		proc_axiom = pr.parse_input(map_input,axiom,iterations,vars)
-		self.draw_axiom(proc_axiom, ang, dist)
-		print(proc_axiom)
 
+		# proc_axiom = pr.parse_input(map_input,axiom,iterations,vars)
+		# self.draw_axiom(proc_axiom, ang, dist)
+
+	def create(self):
+		proc_axiom = pr.parse_input(self.map_input, self.axiom, self.depth, self.variables)
+		self.draw_axiom(proc_axiom, self.ang, self.dist)
 
 	def draw_axiom(self,axiom,ang,dist):
 
@@ -34,6 +44,9 @@ class Lsystem:
 		zdegr = 0
 		ydegr = 0
 		xdegr = 0
+		width = 0
+		dist = 0
+		world = False
 
 		first_itr = True
 		flower_index = 0
@@ -44,18 +57,17 @@ class Lsystem:
 			command = c[0]
 			argument = c[1]
 
+			#geometry constructors
 			if command is 'F' or command is 'L':
-				print ("{} {}".format("F command triggered", xdegr))
+				print ("{} {} {}".format("F command triggered", world, xdegr+ydegr+zdegr))
 				if argument is 'def':
 					argument = dist
 
 				if command is 'F':
-					print(argument)
-					current = self.make_branch(argument)[0]
-				elif command is 'L':
+					current = self.make_branch(argument,width)[0]
+				elif command is 'L': 
 					current = self.make_flower(flower_index)
 					flower_index += 1
-					# current = make_leaf()[0]
 				
 				if not first_itr:
 					current.setMatrix(previous.getMatrix(worldSpace=True))
@@ -63,40 +75,56 @@ class Lsystem:
 				else:
 					first_itr = False
 				
-				print("{} {}".format("x degree ", xdegr))
-				
+				#apply rotates and transforms				
 				if xdegr != 0 or ydegr != 0 or zdegr != 0:
-					print("triggered 1")
-					pm.move(0,argument/2,0,current,os=True)
-					pm.rotate(current,xdegr,ydegr,zdegr,os=True)
-					pm.move(0,argument/2,0,current,os=True,relative=True)
+					pm.move(0,dist+argument/2,0,current,os=True)
+					
+					if not world:
+						pm.rotate(current,xdegr,ydegr,zdegr,os=True)
+					else:
+						pass
+
+					pm.move(0,dist+argument/2,0,current,os=True,relative=True)
+
 				else:
-					print("triggered 2")
-					pm.move(0,dist,0,current,os=True,relative=True)
+					if not world:
+						pm.move(0,argument/2,0,current,os=True,relative=True)
+					else:
+						pass
+				
 				zdegr = 0
 				ydegr = 0
 				xdegr = 0
-				print(xdegr)
+				dist = 0
+				world = False
+
+				# print(xdegr)
 				previous = current
+
+			elif command is 'f':
+				if argument is 'def':
+					dist = 5
+				else:
+					dist = argument
 
 			elif command is '-':
 				if argument is 'def':
 					argument = ang
 				zdegr += -argument
-				print ("{} {}".format("- command triggered", ang))
+				print ("{} {}".format("- command triggered", zdegr))
 
 			elif command is '+':
 				if argument is 'def':
 					argument = ang
 				zdegr += argument
-				print ("{} {}".format("+ command triggered", ang))
+				print ("{} {}".format("+ command triggered", zdegr))
 
 			elif command is '&':
 				if argument is 'def':
 					argument = ang
 				print("& command triggered")
 				xdegr += -argument
-				print(xdegr)
+				print ("{} {}".format("+ command triggered", xdegr))
 
 			elif command is '^':
 				if argument is 'def':
@@ -114,8 +142,8 @@ class Lsystem:
 
 			elif command is '[':
 				print("[ triggered")
-				stack.append([previous,xdegr,ydegr,zdegr])
-				print(stack)
+				stack.append([previous,xdegr,ydegr,zdegr,width,dist,world])
+				# print(stack)
 
 			elif command is ']':
 				print("] triggered")
@@ -125,11 +153,21 @@ class Lsystem:
 				xdegr = prev_state[1]
 				ydegr = prev_state[2]
 				zdegr = prev_state[3]
+				width = prev_state[4]
+				dist = prev_state[5]
+				world = prev_state[6]
 				# print(stack)
 
 			#decrement width
 			elif command is '!':
 				print("! triggered")
+				width = argument
+
+			#rotate Y and until Z-axis is horizontal (very hard)
+			elif command is '$':
+				pass
+				# print("$ triggered")
+				# world = True
 
 	def make_flower(self,flower_index):
 		pm.system.importFile("/Users/brianli/Desktop/Fall2014/lsystem/flower.mb",namespace="flower"+str(flower_index))
@@ -138,10 +176,11 @@ class Lsystem:
 		pm.hyperShade(assign=self.flowerShader)
 		return i
 
-	def make_branch(self,h):
-		i = pm.polyCube(height=h)
+	def make_branch(self,h,w):
+		i = pm.polyCylinder(height=h,radius=w)
 		pm.select(i[0])
 		pm.hyperShade(assign=self.branchShader)
+		print("Constructed {} {} {}".format(i[0],h,w))
 		return i
 
 	def make_leaf(self):
@@ -160,17 +199,53 @@ def main():
 	
 	variables = {}
 	#key variables
+
+	#test input1
 	map_input = \
 '''F(w):F(w)F(w)
 X(w):F(w)[+X(w)][-X(w)]F(w)X(w)'''
 	axiom = "X(10)"
+
+	#test input 2
+	variables = {
+		'r1':0.9,
+		'r2':0.9,
+		'a0':45,
+		'a2':45,
+		'd':137.5,
+		'wr':0.707,
+	}
+	map_input = \
+'''A(l,w):!(w)F(l)[&(a0)B(l*r2,w*wr)]/(d)A(l*r1,w*wr)
+B(l,w):!(w)F(l)[-(a2)$C(l*r2,w*wr)]C(l*r1,w*wr)
+C(l,w):!(w)F(l)[+(a2)$B(l*r2,w*wr)]B(l*r1,w*wr)'''
+# 	map_input = \
+# '''A(l,w):!(w)F(l)[&(a0)B(l*r2,w*wr)]/(d)A(l*r1,w*wr)
+# B(l,w):!(w)F(l)[-(a2)C(l*r2,w*wr)]C(l*r1,w*wr)
+# C(l,w):!(w)F(l)[+(a2)B(l*r2,w*wr)]B(l*r1,w*wr)'''
+	axiom = "A(10,0.5)"
+
+	#test input 3
+	variables ={
+		'd1':94.74,
+		'd2':132.63,
+		'a':18.95,
+		'lr':1.109,
+		'vr':1.732
+	}
+	axiom = "!(1)F(200)/(45)A"
+	map_input =\
+'''A:!(vr)F(50)[&(a)F(50)A]/(d1)[&(a)F(50)A]/d2[&(a)F(50)A]
+F(l):F(l*lr)
+!(w):!(w*vr)'''
 	
-	iterations = 3
+	iterations = 4
 	dist = 5
 	ang = 25.7
+	
 	print("Commence Lsystem Construction")
-	Lsystem(axiom, map_input, iterations, ang, dist,variables)
-
+	test = Lsystem(axiom, map_input, iterations, ang, dist,variables)
+	test.create()
 main()
 
 
