@@ -32,7 +32,8 @@ class AR_OptionsWindow(object):
         self.optionsBorder = cmds.tabLayout(
             scrollable=True,
             tabsVisible=False,
-            height=1
+            height=1,
+            childResizable=True
             )
         cmds.formLayout(
             self.mainForm,e=True,
@@ -46,7 +47,14 @@ class AR_OptionsWindow(object):
                 )
             )
         self.optionsForm = cmds.formLayout(nd=100)
-        # cmds.columnLayout()
+        
+        # cmds.formLayout(
+        #     self.mainForm,e=True,
+        #     attachForm =(
+        #         [self.optionsForm,'left',3],
+        #         [self.optionsForm,'right',3]
+        #         )
+        #     )
         self.displayOptions()
 
         cmds.showWindow()        

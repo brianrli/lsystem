@@ -17,7 +17,8 @@ def create_dict(in_string):
 	for pair in re.split("\n",in_string):
 		keyval = re.split(":",pair)
 		if keyval[0] is not '' and len(keyval) is 2:
-			variables[keyval[0]]=float(keyval[1])
+				variables[keyval[0]]=float(keyval[1])
+
 	# print(variables)
 	return variables
 
@@ -34,9 +35,6 @@ def parse_args(in_string):
 		if pair[1] is '':
 			item.append("def")
 		else:
-			print(m)
-			print(pair)
-			print(pair[1])
 			print(re.match("\((.*?)\)", pair[1]))
 			arguments = re.match("\((.*?)\)", pair[1]).group(1)
 			for ar in re.split(",",arguments):
@@ -50,6 +48,8 @@ def parse_input(in_string,axiom,depth,variables):
 
 	if not in_string or not axiom:
 		return []
+	print(in_string)
+	print(axiom)
 
 	alphabet = "AXBC$!FXf+-&^\/|[]"
 	mappings = {}
@@ -226,4 +226,4 @@ F(l):F(l*lr)
 	# 	print(item[0])
 	# print(parse_args(strng2))
 	# print(create_dict(strvars))
-main()
+# main()

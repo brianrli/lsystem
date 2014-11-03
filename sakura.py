@@ -1,7 +1,9 @@
 import maya.cmds as cmds
+import re
 from lsystem import Lsystem
 from optwin import AR_OptionsWindow
 from parser import create_dict
+
 
 #---strings---
 #variables
@@ -16,25 +18,99 @@ from parser import create_dict
 #--optional--
 #progress bar
 
+#--todo--
+#read/write/load files
+
+skFileExtension = 'sk'
+
 class SK_OptionsWindow(AR_OptionsWindow):
 	def __init__(self):
 		AR_OptionsWindow.__init__(self)
 		self.title = 'Sakura Generator'
 		self.actionName = 'Create'
 		self.sakuraTree = Lsystem("", "", 0, 0, 0, {})
+		self.fileFilter = 'Sakura (*.%s)'%skFileExtension
+
+	def loadFile(self,*args):
+		filePath = ''
+		filePath = cmds.fileDialog2(
+			ff=self.fileFilter, fileMode=1
+			)
+		if filePath is None or len(filePath) < 1: return
+		if isinstance(filePath, list): filePath = filePath[0]
+		try:
+			f = open(filePath, 'r')
+		except:
+			cmds.confirmDialog(
+				t='Error', b=['OK'],
+				m='Unable to open file: %s'%filePath
+			)
+			raise
+		try:
+			fileInput = re.split(";",str(f.read()))
+			print(fileInput)
+			cmds.textFieldGrp(self.axiom,e=True,text=fileInput[0])
+			cmds.intFieldGrp(self.depth,e=True,value1=int(fileInput[1]))
+			cmds.floatFieldGrp(self.dist,e=True,value1=float(fileInput[2]))
+			cmds.floatFieldGrp(self.ang,e=True,value1=float(fileInput[3]))
+			cmds.scrollField(self.projections,e=True,text=fileInput[4])
+			cmds.scrollField(self.variables,e=True,text=fileInput[5])
+	   	
+		except:
+		   	cmds.error("Error reading from SK file.")
+		f.close()	      
+		print 'Load File Button was pushed.'
+
+	def saveFile(self,*args):
+		cmds.showWindow()
+		filePath = ''
+		# try:
+		filePath = cmds.fileDialog2(
+			ff=self.fileFilter, fileMode=0
+		)
+		if filePath is None or len(filePath) < 1: return
+		if isinstance(filePath, list): filePath = filePath[0]
+		# print(filePath[0])
+		try: 
+			f = open(filePath, 'w')
+		except:
+			cmds.confirmDialog(
+				t='Error', b=['OK'],
+				m='Unable to write file: %s'%filePath
+			)
+			raise
+
+		try:
+			self.storeArguments()
+			f.write(str(self.sakuraTree.axiom)+";")
+			f.write(str(self.sakuraTree.depth)+";")
+			f.write(str(self.sakuraTree.dist)+";")
+			f.write(str(self.sakuraTree.ang)+";")
+			f.write(str(self.sakuraTree.map_input)+";")
+			f.write(str(cmds.scrollField(
+							self.variables,q=True,
+							text=True
+							))+";")
+		except:
+			cmds.error("Error Writing to File")
+		print 'Sakura template saved to '+filePath
 
 	def displayOptions(self):
-		
 		#Depth, Default Distance, Default Angle, Axiom
 		self.constructGrp = cmds.frameLayout(
-			label='Construction Parameters'
+			label='Construction Parameters',
+			collapsable=True
 			)
 		cmds.formLayout(
 			self.optionsForm,e=True,
 			attachForm=(
+				[self.constructGrp,'right',0],
 				[self.constructGrp,'top',0],
-				[self.constructGrp,'left',0],
-				[self.constructGrp,'right',0]
+				[self.constructGrp,'left',0]
+				),
+			attachPosition = (
+				[self.constructGrp,'left',1,0],
+				[self.constructGrp,'right',1,100]
 				)
 			)
 		self.constructCol = cmds.columnLayout(adj=True)
@@ -59,7 +135,8 @@ class SK_OptionsWindow(AR_OptionsWindow):
 
 		cmds.setParent(self.optionsForm)
 		self.projectionGrp = cmds.frameLayout(
-			label='Projections'
+			label='Projection Settings',
+			collapsable=True
 			)
 		cmds.formLayout(
 			self.optionsForm,e=True,
@@ -76,7 +153,8 @@ class SK_OptionsWindow(AR_OptionsWindow):
 
 		cmds.setParent(self.optionsForm)
 		self.variableGrp = cmds.frameLayout(
-			label='Variables'
+			label='Variable Settings',
+			collapsable=True
 			)
 		cmds.formLayout(
 			self.optionsForm,e=True,
@@ -88,50 +166,81 @@ class SK_OptionsWindow(AR_OptionsWindow):
 				[self.variableGrp,'right',0]
 				)
 			)
-		self.variableCol = cmds.columnLayout(adj=True)
-		self.variables = cmds.scrollField( editable=True)
 
+		self.variableCol = cmds.columnLayout(adj=True)
+		self.variables = cmds.scrollField(editable=True)
+
+		cmds.setParent(self.optionsForm)
+		self.fileGrp = cmds.frameLayout(
+			label='File Commands',
+			collapsable=True
+			)
+		cmds.formLayout(
+			self.optionsForm,e=True,
+			attachControl=(
+				[self.fileGrp,'top',0,self.variableGrp]
+				),
+			attachForm=(
+				[self.fileGrp,'left',0],
+				[self.fileGrp,'right',0]
+				)
+			)
+		self.fileCol = cmds.columnLayout( adjustableColumn=True )
+		self.loadFile = cmds.button( label='Load File', c=self.loadFile)
+		self.saveFile = cmds.button( label='Save File', c=self.saveFile)
+
+	def storeArguments(self):
+		try:
+			self.sakuraTree.axiom = cmds.textFieldGrp(
+				self.axiom,q=True,
+				text=True
+				)
+		except:
+			cmds.error("Invalid Axiom")
+
+		try:
+			self.sakuraTree.depth = cmds.intFieldGrp(
+				self.depth,q=True,
+				value1=True
+				)
+		except:
+			cmds.error("Invalid Depth")
+
+		try:
+			self.sakuraTree.dist = cmds.floatFieldGrp(
+				self.dist,q=True,
+				value1=True
+				)
+		except:
+			cmds.error("Invalid Default Distance")
+		
+		try:
+			self.sakuraTree.ang = cmds.floatFieldGrp(
+				self.ang,q=True,
+				value1=True
+				)
+		except:
+			cmds.error("Invalid Default Angle")
+			
+		try:
+			self.sakuraTree.map_input = cmds.scrollField(
+				self.projections,q=True,
+				text=True
+				)
+		except:
+			cmds.error("Invalid Projections")
+		
+		try:
+			self.sakuraTree.variables = create_dict(cmds.scrollField(
+				self.variables,q=True,
+				text=True
+				))
+		except:
+			cmds.error("Invalid Variables")
 
 	def applyBtnCmd(self,*args):
-		self.sakuraTree.axiom = cmds.textFieldGrp(
-			self.axiom,q=True,
-			text=True
-			)
-		self.sakuraTree.depth = cmds.intFieldGrp(
-			self.depth,q=True,
-			value1=True
-			)
-		self.sakuraTree.dist = cmds.floatFieldGrp(
-			self.dist,q=True,
-			value1=True
-			)
-		self.sakuraTree.ang = cmds.floatFieldGrp(
-			self.ang,q=True,
-			value1=True
-			)
-		self.sakuraTree.map_input = cmds.scrollField(
-			self.projections,q=True,
-			text=True
-			)
-		self.sakuraTree.variables = create_dict(cmds.scrollField(
-			self.variables,q=True,
-			text=True
-			))
-
-		# print(self.sakuraTree.axiom)
-		# print(self.sakuraTree.depth)
-		# print(self.sakuraTree.map_input)
-		# self.objIndAsCmd={
-		# 	1:cmds.polyCube,
-		# 	2:cmds.polyCone,
-		# 	3:cmds.polyCylinder,
-		# 	4:cmds.polySphere
-		# }
-		# objIndex =cmds.radioButtonGrp(
-		# 	self.objType,q=True,
-		# 	select=True
-		# 	)
-		# newobject=self.objIndAsCmd[objIndex]()
+		self.storeArguments()
 		self.sakuraTree.create()
+		print("Sakura Created")
 SK_OptionsWindow.showUI()
 

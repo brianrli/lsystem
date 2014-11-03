@@ -246,6 +246,6 @@ F(l):F(l*lr)
 	print("Commence Lsystem Construction")
 	test = Lsystem(axiom, map_input, iterations, ang, dist,variables)
 	test.create()
-main()
+# main()
 
 
