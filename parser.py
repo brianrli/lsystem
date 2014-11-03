@@ -28,7 +28,7 @@ def create_dict(in_string):
 def parse_args(in_string):
 	in_string = str(in_string)
 	instructions = []
-	m = re.findall("([\[\]XABC$!FXf\+\-&/])(\(.*?\))?",in_string)
+	m = re.findall("([\[\]XLABC$!FXf\+\-&/])(\(.*?\))?",in_string)
 	for pair in m:
 		item = []
 		item.append(pair[0])
@@ -46,12 +46,10 @@ def parse_args(in_string):
 # and arguments do a given depth
 def parse_input(in_string,axiom,depth,variables):
 
-	if not in_string or not axiom:
+	if not axiom:
 		return []
-	print(in_string)
-	print(axiom)
 
-	alphabet = "AXBC$!FXf+-&^\/|[]"
+	alphabet = "AXLBC$!FXf+-&^\/|[]"
 	mappings = {}
 	for letter in alphabet:
 		mappings[letter] = [letter,'def']
@@ -59,7 +57,7 @@ def parse_input(in_string,axiom,depth,variables):
 	if in_string:
 		r = re.split("\n", in_string)
 		for projection in r:
-			m = re.match("([!ABC$FX\-f\+&/])(\((.*?)\))?:(.*)", projection)
+			m = re.match("([!ABLC$FX\-f\+&/])(\((.*?)\))?:(.*)", projection)
 			try:
 				new_map = [m.group(4)]
 				if m.group(3) is not None:
@@ -219,7 +217,7 @@ vr:1.732
 F(l):F(l*lr)
 !(w):!(w*vr)'''
 
-	final = parse_input(map_input,axiom,2,variables)
+	final = parse_input("L:LL","L",2,None)
 	# final = parse_input("", "", 0, {})
 	print(final)
 	# for item in final:

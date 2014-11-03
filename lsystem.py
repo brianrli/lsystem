@@ -16,6 +16,7 @@ f = pm.newFile(f=True)
 class Lsystem:
 
 	def __init__(self,axiom,map_input,iterations, ang, dist,vars):
+		print("Lsystem Init")
 		self.axiom = axiom
 		self.map_input = map_input
 		self.depth = iterations
@@ -24,7 +25,7 @@ class Lsystem:
 		self.variables = vars 
 
 		self.branchShader = pm.shadingNode('lambert',asShader=True)
-		self.branchShader.setColor([0, .9, 0, 1.0])
+		self.branchShader.setColor([1, 1, 1, 1.0])
 		self.leafShader = pm.shadingNode('lambert',asShader=True)
 		self.leafShader.setColor([0.72, .32, 0.19, 1.0])
 		self.flowerShader = pm.shadingNode('lambert',asShader=True)
@@ -34,7 +35,11 @@ class Lsystem:
 		# self.draw_axiom(proc_axiom, ang, dist)
 
 	def create(self):
+		print("Create Invoked")
+		print(self.axiom)
 		proc_axiom = pr.parse_input(self.map_input, self.axiom, self.depth, self.variables)
+		print(self.dist)
+		print(proc_axiom)
 		self.draw_axiom(proc_axiom, self.ang, self.dist)
 
 	def draw_axiom(self,axiom,ang,dist):
@@ -61,7 +66,7 @@ class Lsystem:
 			if command is 'F' or command is 'L':
 				print ("{} {} {}".format("F command triggered", world, xdegr+ydegr+zdegr))
 				if argument is 'def':
-					argument = dist
+					argument = self.dist
 
 				if command is 'F':
 					current = self.make_branch(argument,width)[0]
@@ -173,7 +178,7 @@ class Lsystem:
 		pm.system.importFile("/Users/brianli/Desktop/Fall2014/lsystem/flower.mb",namespace="flower"+str(flower_index))
 		i = pm.nodetypes.Transform("flower"+str(flower_index)+":Flower")
 		pm.select(i)
-		pm.hyperShade(assign=self.flowerShader)
+		# pm.hyperShade(assign=self.flowerShader)
 		return i
 
 	def make_branch(self,h,w):

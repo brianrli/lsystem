@@ -28,7 +28,9 @@ class SK_OptionsWindow(AR_OptionsWindow):
 		AR_OptionsWindow.__init__(self)
 		self.title = 'Sakura Generator'
 		self.actionName = 'Create'
+		print("Window Init")
 		self.sakuraTree = Lsystem("", "", 0, 0, 0, {})
+		print(self.sakuraTree.branchShader)
 		self.fileFilter = 'Sakura (*.%s)'%skFileExtension
 
 	def loadFile(self,*args):
@@ -48,18 +50,16 @@ class SK_OptionsWindow(AR_OptionsWindow):
 			raise
 		try:
 			fileInput = re.split(";",str(f.read()))
-			print(fileInput)
 			cmds.textFieldGrp(self.axiom,e=True,text=fileInput[0])
 			cmds.intFieldGrp(self.depth,e=True,value1=int(fileInput[1]))
 			cmds.floatFieldGrp(self.dist,e=True,value1=float(fileInput[2]))
 			cmds.floatFieldGrp(self.ang,e=True,value1=float(fileInput[3]))
 			cmds.scrollField(self.projections,e=True,text=fileInput[4])
 			cmds.scrollField(self.variables,e=True,text=fileInput[5])
-	   	
 		except:
 		   	cmds.error("Error reading from SK file.")
 		f.close()	      
-		print 'Load File Button was pushed.'
+		print 'Template Loaded Successfully'
 
 	def saveFile(self,*args):
 		cmds.showWindow()
@@ -70,7 +70,6 @@ class SK_OptionsWindow(AR_OptionsWindow):
 		)
 		if filePath is None or len(filePath) < 1: return
 		if isinstance(filePath, list): filePath = filePath[0]
-		# print(filePath[0])
 		try: 
 			f = open(filePath, 'w')
 		except:
@@ -186,8 +185,8 @@ class SK_OptionsWindow(AR_OptionsWindow):
 				)
 			)
 		self.fileCol = cmds.columnLayout( adjustableColumn=True )
-		self.loadFile = cmds.button( label='Load File', c=self.loadFile)
-		self.saveFile = cmds.button( label='Save File', c=self.saveFile)
+		self.loadFile = cmds.button( label='Load Template', c=self.loadFile)
+		self.saveFile = cmds.button( label='Save Template', c=self.saveFile)
 
 	def storeArguments(self):
 		try:
