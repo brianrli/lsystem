@@ -2,7 +2,7 @@
 LSystems by
 Brian Li
 
-A basic (my first) maya scripting project.
+Procedural Sakura Trees using Lindenmayer Systems.
 """
 import string
 import re
@@ -11,10 +11,12 @@ import parser as pr
 from pymel import *
 import pymel.core as pm
 
-
 f = pm.newFile(f=True)
+
+#Class Lsystem, handles generation of Lsystems
 class Lsystem:
 
+	#initialize all variables
 	def __init__(self,axiom,map_input,iterations, ang, dist,vars):
 		print("Lsystem Init")
 		self.axiom = axiom
@@ -29,9 +31,8 @@ class Lsystem:
 		self.branchShader.setColor([1, 1, 1, 1.0])
 		self.leafShader = pm.shadingNode('lambert',asShader=True,name="leafText")
 		self.leafShader.setColor([0.72, .32, 0.19, 1.0])
-		# self.flowerShader = pm.shadingNode('lambert',asShader=True)
-		# self.flowerShader.setColor([0.894,0.447,.592,1.0])
 
+	#process construction parameters and create Sakura Tree
 	def create(self):
 		print("Create Invoked")
 		print(self.axiom)
@@ -40,8 +41,8 @@ class Lsystem:
 		print(proc_axiom)
 		self.draw_axiom(proc_axiom, self.ang, self.dist)
 
+	#draw the tree given by an axiom
 	def draw_axiom(self,axiom,ang,dist):
-
 		stack = []
 
 		zdegr = 0
@@ -51,6 +52,7 @@ class Lsystem:
 		dist = 0
 		world = False
 		previous = None
+		pdist = 0 #previous distance
 
 		first_itr = True
 
@@ -79,23 +81,30 @@ class Lsystem:
 					first_itr = False
 				
 				#apply rotates and transforms				
-				if xdegr != 0 or ydegr != 0 or zdegr != 0:
-					pm.move(0,dist+argument/2,0,current,os=True)					
+				if xdegr != 0 or zdegr != 0:
+					pm.move(0,pdist,0,current,os=True)					
 					pm.rotate(current,xdegr,ydegr,zdegr,os=True)
 					if command is 'F':
 						pm.move(0,dist+argument/2,0,current,os=True,relative=True)
+						# pass
 					if command is 'L':
 						print(width)
 						pm.move(0,width,0,current,os=True,relative=True)
 
 				else:
-					pm.move(0,argument/2,0,current,os=True,relative=True)
-				
+					if command is 'F':
+						pm.move(0,pdist+dist+argument/2,0,current,os=True,relative=True)
+					if command is 'L':
+						pm.move(0,dist+argument/2,0,current,os=True,relative=True)
+
 				zdegr = 0
 				ydegr = 0
 				xdegr = 0
 				dist = 0
 				world = False
+				
+				if command is 'F':
+					pdist = argument/2
 
 				# print(xdegr)
 				previous = current
@@ -165,12 +174,13 @@ class Lsystem:
 				else:
 					width = argument
 
-			#rotate Y and until Z-axis is horizontal (very hard)
+			#rotate Y and until Z-axis is horizontal (WIP)
 			elif command is '$':
 				pass
 				# print("$ triggered")
 				# world = True
 
+	#references from flower.mb
 	def make_flower(self,flower_index):
 		pm.system.importFile("/Users/brianli/Desktop/Fall2014/lsystem/flower.mb",namespace="flower"+str(flower_index))
 		i = pm.nodetypes.Transform("flower"+str(flower_index)+":Flower")
@@ -178,6 +188,7 @@ class Lsystem:
 		# pm.hyperShade(assign=self.flowerShader)
 		return i
 
+	#make branch
 	def make_branch(self,h,w):
 		print(w)
 		i = pm.polyCylinder(height=h,radius=w)
@@ -186,6 +197,7 @@ class Lsystem:
 		print("Constructed {} {} {}".format(i[0],h,w))
 		return i
 
+	#make leaf
 	def make_leaf(self):
 		i = pm.polyCube(w=.5,d=1.5,h=4,sw=3,sh=3)
 		pm.select(i[0].vtx[12:19])
@@ -198,8 +210,8 @@ class Lsystem:
 		pm.hyperShade(assign=Lsystem.leafShader)
 		return i
 
+#for testing purposes
 def main():
-	
 	variables = {}
 	#key variables
 
