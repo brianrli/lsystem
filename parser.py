@@ -25,17 +25,16 @@ def create_dict(in_string):
 
 # Given an input string, returns list of commands
 # and arguments, as [command, arguments...]
-def parse_args(in_string):
+def parse_args(in_string,tokens):
 	in_string = str(in_string)
 	instructions = []
-	m = re.findall("([\[\]XLABC$!FXf\+\-&/])(\(.*?\))?",in_string)
+	m = re.findall("([\[\]XLABC"+tokens+"$!^FXf\+\-&/])(\(.*?\))?",in_string)
 	for pair in m:
 		item = []
 		item.append(pair[0])
 		if pair[1] is '':
 			item.append("def")
 		else:
-			print(re.match("\((.*?)\)", pair[1]))
 			arguments = re.match("\((.*?)\)", pair[1]).group(1)
 			for ar in re.split(",",arguments):
 				item.append(ar)
@@ -50,6 +49,7 @@ def parse_input(in_string,axiom,depth,variables):
 		return []
 
 	alphabet = "AXLBC$!FXf+-&^\/|[]"
+	tokens = ""
 	mappings = {}
 	for letter in alphabet:
 		mappings[letter] = [letter,'def']
@@ -57,7 +57,11 @@ def parse_input(in_string,axiom,depth,variables):
 	if in_string:
 		r = re.split("\n", in_string)
 		for projection in r:
-			m = re.match("([!ABLC$FX\-f\+&/])(\((.*?)\))?:(.*)", projection)
+			token = re.split(":",projection)[0]
+			if token not in alphabet and token not in tokens:
+				tokens += token
+
+			m = re.match("([!ABLC$F^X\-f\+&/"+tokens+"])(\((.*?)\))?:(.*)", projection)
 			try:
 				new_map = [m.group(4)]
 				if m.group(3) is not None:
@@ -69,9 +73,7 @@ def parse_input(in_string,axiom,depth,variables):
 				print(projection)
 				raise SystemExit(0)
 
-	# print(m.groups())
-	axiom_list = parse_args(axiom)
-
+	axiom_list = parse_args(axiom,tokens)
 
 	for i in range(depth):
 		newaxiom = []
@@ -111,8 +113,8 @@ def parse_input(in_string,axiom,depth,variables):
 					# 	# print("a number {}".format(local_map[counter]))
 
 				#recursively parse replacement
-				replacement_pairs = parse_args(replacement)
-				
+				replacement_pairs = parse_args(replacement,tokens)
+
 				#for command and arguments in new pairs, parse
 				for pair in replacement_pairs:
 					new_expressions = []
@@ -217,11 +219,21 @@ vr:1.732
 F(l):F(l*lr)
 !(w):!(w*vr)'''
 
-	final = parse_input("L:LL","L",2,None)
+	strvars = " "
+	axiom = "K"
+	map_input =\
+'''A:[&FK!A]/////[&FK!A]///////[&FK!A]
+F:S/////F
+S:FK
+K:[^^L]'''
+
+	final = parse_input(map_input,axiom,1,None)
 	# final = parse_input("", "", 0, {})
-	print(final)
-	# for item in final:
-	# 	print(item[0])
+	# print(final)
+	christmas = ""
+	for item in final:
+		christmas+=item[0]
+	print(christmas)
 	# print(parse_args(strng2))
 	# print(create_dict(strvars))
 # main()

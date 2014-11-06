@@ -23,16 +23,14 @@ class Lsystem:
 		self.ang = ang
 		self.dist = dist
 		self.variables = vars 
+		self.flower_index = 0
 
-		self.branchShader = pm.shadingNode('lambert',asShader=True)
+		self.branchShader = pm.shadingNode('lambert',asShader=True,name="branchText")
 		self.branchShader.setColor([1, 1, 1, 1.0])
-		self.leafShader = pm.shadingNode('lambert',asShader=True)
+		self.leafShader = pm.shadingNode('lambert',asShader=True,name="leafText")
 		self.leafShader.setColor([0.72, .32, 0.19, 1.0])
-		self.flowerShader = pm.shadingNode('lambert',asShader=True)
-		self.flowerShader.setColor([0.894,0.447,.592,1.0])
-
-		# proc_axiom = pr.parse_input(map_input,axiom,iterations,vars)
-		# self.draw_axiom(proc_axiom, ang, dist)
+		# self.flowerShader = pm.shadingNode('lambert',asShader=True)
+		# self.flowerShader.setColor([0.894,0.447,.592,1.0])
 
 	def create(self):
 		print("Create Invoked")
@@ -49,12 +47,12 @@ class Lsystem:
 		zdegr = 0
 		ydegr = 0
 		xdegr = 0
-		width = 0
+		width = 0.5
 		dist = 0
 		world = False
+		previous = None
 
 		first_itr = True
-		flower_index = 0
 
 		# axiom = "F-FFFF-F"
 		for c in axiom:
@@ -64,17 +62,17 @@ class Lsystem:
 
 			#geometry constructors
 			if command is 'F' or command is 'L':
-				print ("{} {} {}".format("F command triggered", world, xdegr+ydegr+zdegr))
+				print ("{} {} {} {}".format("F command triggered", world, xdegr+ydegr+zdegr,width))
 				if argument is 'def':
 					argument = self.dist
 
 				if command is 'F':
 					current = self.make_branch(argument,width)[0]
 				elif command is 'L': 
-					current = self.make_flower(flower_index)
-					flower_index += 1
+					current = self.make_flower(self.flower_index)
+					self.flower_index += 1
 				
-				if not first_itr:
+				if previous is not None:
 					current.setMatrix(previous.getMatrix(worldSpace=True))
 					pm.parent(current,previous)
 				else:
@@ -82,20 +80,16 @@ class Lsystem:
 				
 				#apply rotates and transforms				
 				if xdegr != 0 or ydegr != 0 or zdegr != 0:
-					pm.move(0,dist+argument/2,0,current,os=True)
-					
-					if not world:
-						pm.rotate(current,xdegr,ydegr,zdegr,os=True)
-					else:
-						pass
-
-					pm.move(0,dist+argument/2,0,current,os=True,relative=True)
+					pm.move(0,dist+argument/2,0,current,os=True)					
+					pm.rotate(current,xdegr,ydegr,zdegr,os=True)
+					if command is 'F':
+						pm.move(0,dist+argument/2,0,current,os=True,relative=True)
+					if command is 'L':
+						print(width)
+						pm.move(0,width,0,current,os=True,relative=True)
 
 				else:
-					if not world:
-						pm.move(0,argument/2,0,current,os=True,relative=True)
-					else:
-						pass
+					pm.move(0,argument/2,0,current,os=True,relative=True)
 				
 				zdegr = 0
 				ydegr = 0
@@ -166,7 +160,10 @@ class Lsystem:
 			#decrement width
 			elif command is '!':
 				print("! triggered")
-				width = argument
+				if argument is 'def':
+					width*=0.9
+				else:
+					width = argument
 
 			#rotate Y and until Z-axis is horizontal (very hard)
 			elif command is '$':
@@ -182,6 +179,7 @@ class Lsystem:
 		return i
 
 	def make_branch(self,h,w):
+		print(w)
 		i = pm.polyCylinder(height=h,radius=w)
 		pm.select(i[0])
 		pm.hyperShade(assign=self.branchShader)

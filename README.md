@@ -1,11 +1,14 @@
 --LSystem Sakura Generator--
-This WIP is a script for prcoedural sakura tree generation using the algorithms described in "The Algorithmic Beauty of Plants."
+Script for lsystem generation of sakura trees
 
 --parser.py-- 
-regex parsing of command line arguments
+regex parser for command line arguments
 
 --lsystem.py-- 
-PyMel
+PyMel lsystem 
 
 --sakura.py-- 
-maya.cmds
+maya.cmds GUI
+
+--templates--
+contains example .sk files
