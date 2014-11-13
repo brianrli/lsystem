@@ -112,7 +112,7 @@ class SK_OptionsWindow(AR_OptionsWindow):
 				[self.constructGrp,'right',1,100]
 				)
 			)
-		self.constructCol = cmds.columnLayout(adj=True)
+		self.constructCol = cmds.columnLayout(adj=True,rs=1)
 		self.depth = cmds.intFieldGrp(
 			label='Depth: ',
 			numberOfFields=1,
@@ -131,6 +131,27 @@ class SK_OptionsWindow(AR_OptionsWindow):
 		self.axiom = cmds.textFieldGrp(
 			label='Axiom: '
 		)
+
+		self.tropismFlag = cmds.checkBoxGrp( numberOfCheckBoxes=1, label='Tropism',cc=self.toggleTropism)
+		
+		self.ternaryGrp = cmds.frameLayout(
+			label='Ternary Branching Parameters',
+			collapsable=False,
+			en=False
+			)
+		self.ternaryCol = cmds.columnLayout(adj=True,rs=1)
+
+		self.e = cmds.floatFieldGrp(
+			label='e: ',
+			numberOfFields=1,
+			value1=1
+			)
+		self.tropism = cmds.floatFieldGrp(
+			label='Vector: ',
+			numberOfFields=3,
+			value = [0.0,0.0,0.0,0.0]
+			)
+
 
 		cmds.setParent(self.optionsForm)
 		self.projectionGrp = cmds.frameLayout(
@@ -241,5 +262,12 @@ class SK_OptionsWindow(AR_OptionsWindow):
 		self.storeArguments()
 		self.sakuraTree.create()
 		print("Sakura Created")
+
+	#enable/disable tropism functions
+	def toggleTropism(self,*args):
+		toggle = cmds.checkBoxGrp(self.tropismFlag,q=True,value1=True)
+		cmds.frameLayout(self.ternaryGrp,e=True,en=toggle)
+
 SK_OptionsWindow.showUI()
 
+	

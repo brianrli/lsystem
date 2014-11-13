@@ -74,6 +74,10 @@ def parse_input(in_string,axiom,depth,variables):
 				raise SystemExit(0)
 
 	axiom_list = parse_args(axiom,tokens)
+	for i in range(len(axiom_list)):
+		for k in range(len(axiom_list[i][1:])):
+			if is_number(axiom_list[i][k+1]):
+				axiom_list[i][k+1]=float(axiom_list[i][k+1])
 
 	for i in range(depth):
 		newaxiom = []
@@ -220,17 +224,18 @@ F(l):F(l*lr)
 !(w):!(w*vr)'''
 
 	strvars = " "
-	axiom = "K"
+	axiom = "!(1)F(200)/(45)A(10,20)"
 	map_input =\
 '''A:[&FK!A]/////[&FK!A]///////[&FK!A]
 F:S/////F
 S:FK
 K:[^^L]'''
 
-	final = parse_input(map_input,axiom,1,None)
+	final = parse_input(map_input,axiom,0,None)
 	# final = parse_input("", "", 0, {})
-	# print(final)
+	# print(final)value, ...
 	christmas = ""
+	print(final)
 	for item in final:
 		christmas+=item[0]
 	print(christmas)

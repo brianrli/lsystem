@@ -6,12 +6,15 @@ Procedural Sakura Trees using Lindenmayer Systems.
 """
 import string
 import re
+import math
 from pyparsing import *
 import parser as pr
 from pymel import *
 import pymel.core as pm
+import ternary as tn
+import pymel.core.datatypes as dt
 
-f = pm.newFile(f=True)
+# f = pm.newFile(f=True)
 
 #Class Lsystem, handles generation of Lsystems
 class Lsystem:
@@ -26,6 +29,11 @@ class Lsystem:
 		self.dist = dist
 		self.variables = vars 
 		self.flower_index = 0
+
+		self.ternaryflag = False
+		self.tropism = dt.Vector(-0.61,0.77,-0.19)
+		# self.tropism = dt.Vector(0.77,-0.61,-0.19) #change x&y
+		self.e = 0.40
 
 		self.branchShader = pm.shadingNode('lambert',asShader=True,name="branchText")
 		self.branchShader.setColor([1, 1, 1, 1.0])
@@ -56,13 +64,12 @@ class Lsystem:
 
 		first_itr = True
 
-		# axiom = "F-FFFF-F"
 		for c in axiom:
 			
 			command = c[0]
 			argument = c[1]
 
-			#geometry constructors
+			#apply geometry
 			if command is 'F' or command is 'L':
 				print ("{} {} {} {}".format("F command triggered", world, xdegr+ydegr+zdegr,width))
 				if argument is 'def':
@@ -72,23 +79,28 @@ class Lsystem:
 					current = self.make_branch(argument,width)[0]
 				elif command is 'L': 
 					current = self.make_flower(self.flower_index)
+					pm.scale(3,3,3)
 					self.flower_index += 1
 				
 				if previous is not None:
 					current.setMatrix(previous.getMatrix(worldSpace=True))
 					pm.parent(current,previous)
-				else:
-					first_itr = False
 				
 				#apply rotates and transforms				
-				if xdegr != 0 or zdegr != 0:
-					pm.move(0,pdist,0,current,os=True)					
-					pm.rotate(current,xdegr,ydegr,zdegr,os=True)
+				if xdegr != 0 or zdegr != 0 or self.ternaryflag:
+					pm.move(0,pdist,0,current,os=True)
+					# print(tn.process(current))
+					
+					if previous is not None and command is 'F':
+						tn.apply_tropism(current,self.e,self.tropism)
+						# current.rotateBy(tn.process(current),space='object')
+						# pm.rotate(current,pm.util.degrees(tn.process(current).asEulerRotation()),os=True,relative=True)
+
+
+					pm.rotate(current,xdegr,ydegr,zdegr,os=True,relative=True)
 					if command is 'F':
 						pm.move(0,dist+argument/2,0,current,os=True,relative=True)
-						# pass
 					if command is 'L':
-						print(width)
 						pm.move(0,width,0,current,os=True,relative=True)
 
 				else:
@@ -184,7 +196,7 @@ class Lsystem:
 	def make_flower(self,flower_index):
 		pm.system.importFile("/Users/brianli/Desktop/Fall2014/lsystem/flower.mb",namespace="flower"+str(flower_index))
 		i = pm.nodetypes.Transform("flower"+str(flower_index)+":Flower")
-		pm.select(i)
+		pm.select(i,hi=True)
 		# pm.hyperShade(assign=self.flowerShader)
 		return i
 
@@ -209,6 +221,10 @@ class Lsystem:
 		pm.select(i[0])
 		pm.hyperShade(assign=Lsystem.leafShader)
 		return i
+
+def apply_tropism(obj,tropism,e):
+	pass
+
 
 #for testing purposes
 def main():
