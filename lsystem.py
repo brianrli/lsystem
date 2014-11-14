@@ -31,9 +31,8 @@ class Lsystem:
 		self.flower_index = 0
 
 		self.ternaryflag = False
-		self.tropism = dt.Vector(-0.61,0.77,-0.19)
-		# self.tropism = dt.Vector(0.77,-0.61,-0.19) #change x&y
-		self.e = 0.40
+		self.tropism = dt.Vector(0,0,0)
+		self.e = 0
 
 		self.branchShader = pm.shadingNode('lambert',asShader=True,name="branchText")
 		self.branchShader.setColor([1, 1, 1, 1.0])
@@ -91,11 +90,8 @@ class Lsystem:
 					pm.move(0,pdist,0,current,os=True)
 					# print(tn.process(current))
 					
-					if previous is not None and command is 'F':
+					if previous is not None and command is 'F' and self.ternaryflag:
 						tn.apply_tropism(current,self.e,self.tropism)
-						# current.rotateBy(tn.process(current),space='object')
-						# pm.rotate(current,pm.util.degrees(tn.process(current).asEulerRotation()),os=True,relative=True)
-
 
 					pm.rotate(current,xdegr,ydegr,zdegr,os=True,relative=True)
 					if command is 'F':

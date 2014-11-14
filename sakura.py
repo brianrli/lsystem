@@ -3,6 +3,7 @@ import re
 from lsystem import Lsystem
 from optwin import AR_OptionsWindow
 from parser import create_dict
+import pymel.core.datatypes as dt
 
 
 #---strings---
@@ -48,16 +49,25 @@ class SK_OptionsWindow(AR_OptionsWindow):
 				m='Unable to open file: %s'%filePath
 			)
 			raise
-		try:
-			fileInput = re.split(";",str(f.read()))
-			cmds.textFieldGrp(self.axiom,e=True,text=fileInput[0])
-			cmds.intFieldGrp(self.depth,e=True,value1=int(fileInput[1]))
-			cmds.floatFieldGrp(self.dist,e=True,value1=float(fileInput[2]))
-			cmds.floatFieldGrp(self.ang,e=True,value1=float(fileInput[3]))
-			cmds.scrollField(self.projections,e=True,text=fileInput[4])
-			cmds.scrollField(self.variables,e=True,text=fileInput[5])
-		except:
-		   	cmds.error("Error reading from SK file.")
+	# try:
+		fileInput = re.split(";",str(f.read()))
+		cmds.textFieldGrp(self.axiom,e=True,text=fileInput[0])
+		cmds.intFieldGrp(self.depth,e=True,value1=int(fileInput[1]))
+		cmds.floatFieldGrp(self.dist,e=True,value1=float(fileInput[2]))
+		cmds.floatFieldGrp(self.ang,e=True,value1=float(fileInput[3]))
+		cmds.scrollField(self.projections,e=True,text=fileInput[4])
+		cmds.scrollField(self.variables,e=True,text=fileInput[5])
+
+		cmds.checkBoxGrp(self.tropismFlag,e=True,value1=bool(int(fileInput[6])))
+		cmds.floatFieldGrp(self.e,e=True,value1=float(fileInput[7]))
+		cmds.floatFieldGrp(
+			self.tropism,e=True,
+			value=[float(fileInput[8]),float(fileInput[9]),float(fileInput[10]),0.0]
+			)
+		self.toggleTropism()
+
+		# except:
+		#    	cmds.error("Error reading from SK file.")
 		f.close()	      
 		print 'Template Loaded Successfully'
 
@@ -90,6 +100,14 @@ class SK_OptionsWindow(AR_OptionsWindow):
 							self.variables,q=True,
 							text=True
 							))+";")
+
+			f.write(str(int(self.sakuraTree.ternaryflag))+";")
+			f.write(str(self.sakuraTree.e)+";")
+			f.write(str(self.sakuraTree.tropism.x)+";")
+			f.write(str(self.sakuraTree.tropism.y)+";")
+			f.write(str(self.sakuraTree.tropism.z)+";")
+
+
 		except:
 			cmds.error("Error Writing to File")
 		print 'Sakura template saved to '+filePath
@@ -257,6 +275,30 @@ class SK_OptionsWindow(AR_OptionsWindow):
 				))
 		except:
 			cmds.error("Invalid Variables")
+
+		try:
+			self.sakuraTree.ternaryflag=cmds.checkBoxGrp(
+				self.tropismFlag,q=True,value1=True
+				)
+		except:
+			cmds.error("Invalid Ternary Flag")
+
+		try:
+			self.sakuraTree.e = cmds.floatFieldGrp(
+				self.e,q=True,
+				value1=True
+				)
+		except:
+			cmds.error("Invalid e")
+
+		try:
+			self.sakuraTree.tropism=dt.Vector(cmds.floatFieldGrp(
+				self.tropism,q=True,
+				value=True
+			))
+		except:
+			cmds.error("Invalid Tropism")
+
 
 	def applyBtnCmd(self,*args):
 		self.storeArguments()

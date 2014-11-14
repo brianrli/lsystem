@@ -35,6 +35,8 @@ def getLocalVecToWorldSpaceAPI(obj, vec=om.MVector.yAxis):
 	return dt.Vector(vec.x,vec.y,vec.z)
 
 def apply_tropism(obj, e, tropism, vec=om.MVector.yAxis):
+	print("E IS WHATTTT!!????")
+	print(e)
 	#get selection list
 	selList = om.MSelectionList()
 
@@ -52,14 +54,11 @@ def apply_tropism(obj, e, tropism, vec=om.MVector.yAxis):
 	transformMX = transform.transformation()
 	transformMX.setRotationQuaternion( quatWS.x, quatWS.y, quatWS.z, quatWS.w)
 	matrix = transformMX.asMatrix()
-
-	e=0.2
 	
-	tropism = tropism.normal()
-	tropism = (tropism*e)+getLocalVecToWorldSpaceAPI(obj)
-	tropism = (tropism*dt.Matrix(matrix).inverse()).normal()
+	tropism = (tropism.normal()*e)+getLocalVecToWorldSpaceAPI(obj)
+	tropism2 = (tropism*dt.Matrix(matrix).inverse()).normal()
 
-	quat = dt.Vector(0,1,0).rotateTo(tropism)
+	quat = dt.Vector(0,1,0).rotateTo(tropism2)
 	obj.rotateBy(quat,space='preTransform')
 
 	# print(quat.asEulerRotation())
