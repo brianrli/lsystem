@@ -6,6 +6,7 @@ from parser import create_dict
 import pymel.core.datatypes as dt
 
 
+
 #---strings---
 #variables
 #axiom
@@ -49,25 +50,26 @@ class SK_OptionsWindow(AR_OptionsWindow):
 				m='Unable to open file: %s'%filePath
 			)
 			raise
-	# try:
-		fileInput = re.split(";",str(f.read()))
-		cmds.textFieldGrp(self.axiom,e=True,text=fileInput[0])
-		cmds.intFieldGrp(self.depth,e=True,value1=int(fileInput[1]))
-		cmds.floatFieldGrp(self.dist,e=True,value1=float(fileInput[2]))
-		cmds.floatFieldGrp(self.ang,e=True,value1=float(fileInput[3]))
-		cmds.scrollField(self.projections,e=True,text=fileInput[4])
-		cmds.scrollField(self.variables,e=True,text=fileInput[5])
 
-		cmds.checkBoxGrp(self.tropismFlag,e=True,value1=bool(int(fileInput[6])))
-		cmds.floatFieldGrp(self.e,e=True,value1=float(fileInput[7]))
-		cmds.floatFieldGrp(
-			self.tropism,e=True,
-			value=[float(fileInput[8]),float(fileInput[9]),float(fileInput[10]),0.0]
-			)
-		self.toggleTropism()
+		try:
+			fileInput = re.split(";",str(f.read()))
+			cmds.textFieldGrp(self.axiom,e=True,text=fileInput[0])
+			cmds.intFieldGrp(self.depth,e=True,value1=int(fileInput[1]))
+			cmds.floatFieldGrp(self.dist,e=True,value1=float(fileInput[2]))
+			cmds.floatFieldGrp(self.ang,e=True,value1=float(fileInput[3]))
+			cmds.scrollField(self.projections,e=True,text=fileInput[4])
+			cmds.scrollField(self.variables,e=True,text=fileInput[5])
 
-		# except:
-		#    	cmds.error("Error reading from SK file.")
+			cmds.checkBoxGrp(self.tropismFlag,e=True,value1=bool(int(fileInput[6])))
+			cmds.floatFieldGrp(self.e,e=True,value1=float(fileInput[7]))
+			cmds.floatFieldGrp(
+				self.tropism,e=True,
+				value=[float(fileInput[8]),float(fileInput[9]),float(fileInput[10]),0.0]
+				)
+			self.toggleTropism()
+
+		except:
+		   	cmds.error("Error reading from SK file.")
 		f.close()	      
 		print 'Template Loaded Successfully'
 

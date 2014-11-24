@@ -14,7 +14,7 @@ import pymel.core as pm
 import ternary as tn
 import pymel.core.datatypes as dt
 
-# f = pm.newFile(f=True)
+f = pm.newFile(f=True)
 
 #Class Lsystem, handles generation of Lsystems
 class Lsystem:
@@ -68,8 +68,34 @@ class Lsystem:
 			command = c[0]
 			argument = c[1]
 
-			#apply geometry
-			if command is 'F' or command is 'L':
+			# draw flower
+			if command is 'L':
+				if argument is 'def':
+					argument = self.dist
+				current = self.make_flower(self.flower_index)
+				self.flower_index += 1
+				if previous is not None:
+					current.setMatrix(previous.getMatrix(worldSpace=True))
+					pm.parent(current,previous)
+				pm.scale(15,15,15)
+				if xdegr != 0 or zdegr != 0 or ydegr != 0:
+					# print(pdist)
+					current.translateY.set(pdist)
+					# pm.move(0,pdist,0,current,os=True)
+					# pm.rotate(current,xdegr,ydegr,zdegr,os=True,relative=True)
+					print(width)
+					# pm.move(0,width,0,current,os=True,relative=True)
+				else:
+					pm.move(0,dist+argument/2,0,current,os=True,relative=True)
+
+				zdegr = 0
+				ydegr = 0
+				xdegr = 0
+				dist = 0
+				world = False
+				previous = current
+
+			if command is 'F':
 				print ("{} {} {} {}".format("F command triggered", world, xdegr+ydegr+zdegr,width))
 				if argument is 'def':
 					argument = self.dist
@@ -78,12 +104,15 @@ class Lsystem:
 					current = self.make_branch(argument,width)[0]
 				elif command is 'L': 
 					current = self.make_flower(self.flower_index)
-					pm.scale(3,3,3)
+					# pm.scale(3,3,3)
 					self.flower_index += 1
 				
 				if previous is not None:
 					current.setMatrix(previous.getMatrix(worldSpace=True))
 					pm.parent(current,previous)
+				if command is 'L':
+					pm.scale(8,8,8)
+
 				
 				#apply rotates and transforms				
 				if xdegr != 0 or zdegr != 0 or self.ternaryflag:
@@ -192,7 +221,7 @@ class Lsystem:
 	def make_flower(self,flower_index):
 		pm.system.importFile("/Users/brianli/Desktop/Fall2014/lsystem/flower.mb",namespace="flower"+str(flower_index))
 		i = pm.nodetypes.Transform("flower"+str(flower_index)+":Flower")
-		pm.select(i,hi=True)
+		pm.select(i,hi=False)
 		# pm.hyperShade(assign=self.flowerShader)
 		return i
 
